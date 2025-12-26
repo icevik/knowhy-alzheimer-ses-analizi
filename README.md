@@ -27,7 +27,8 @@ Alzheimer ve MCI (Hafif Bilişsel Bozukluk) tespiti için ses kayıtlarını ana
 
 ### Gereksinimler
 - Docker ve Docker Compose
-- OpenAI API anahtarı
+- OpenAI API anahtarı (Whisper ve GPT-4 için)
+- OpenRouter API anahtarı (opsiyonel, klinik rapor için)
 
 ### Hızlı Başlangıç
 
@@ -45,9 +46,14 @@ Copy-Item .env.example .env
 cp .env.example .env
 ```
 
-3. **.env dosyasını düzenleyin ve OpenAI API anahtarınızı ekleyin**
+3. **.env dosyasını düzenleyin ve API anahtarlarınızı ekleyin**
 ```
+# OpenAI API (Whisper transkripsiyon ve GPT-4 analiz için)
 OPENAI_API_KEY=sk-your-api-key-here
+
+# OpenRouter API (Klinik rapor oluşturma için - opsiyonel)
+OPENROUTER_API_KEY=sk-or-v1-your-openrouter-key-here
+OPENROUTER_MODEL=google/gemini-2.0-flash-exp:free
 ```
 
 4. **Docker Compose ile başlatın**
@@ -142,5 +148,19 @@ npm run dev
 
 - Ses dosyaları maksimum 25MB olabilir
 - OpenAI API kullanımı için ücretlendirme geçerlidir
+- OpenRouter API anahtarı opsiyoneldir - yoksa temel analiz yapılır ancak klinik rapor oluşturulmaz
 - Veritabanı verileri Docker volume'ünde saklanır
+
+## OpenRouter Yapılandırması
+
+Klinik rapor oluşturma için OpenRouter kullanılır. OpenRouter üzerinden çeşitli AI modellerine erişebilirsiniz:
+
+1. [OpenRouter](https://openrouter.ai/) hesabı oluşturun
+2. API anahtarı alın
+3. İstediğiniz modeli seçin (örnek: `google/gemini-2.0-flash-exp:free`, `anthropic/claude-3-opus`, vb.)
+4. `.env` dosyasına ekleyin:
+   ```
+   OPENROUTER_API_KEY=sk-or-v1-your-key-here
+   OPENROUTER_MODEL=google/gemini-2.0-flash-exp:free
+   ```
 

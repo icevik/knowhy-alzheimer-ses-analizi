@@ -8,14 +8,21 @@ from typing import Optional
 
 class OpenAIService:
     def __init__(self):
-        self.client = OpenAI(api_key=settings.openai_api_key)
+        client_kwargs = {}
+        if settings.openai_base_url:
+            client_kwargs["base_url"] = settings.openai_base_url
+
+        self.client = OpenAI(
+            api_key=settings.openai_api_key,
+            **client_kwargs,
+        )
     
     async def transcribe_audio(self, audio_path: str, language: str = "tr") -> str:
         """Whisper API ile ses dosyasını transkribe et"""
         def _transcribe():
             with open(audio_path, "rb") as audio_file:
                 transcript = self.client.audio.transcriptions.create(
-                    model="whisper-1",
+                    model=settings.openai_whisper_model,
                     file=audio_file,
                     language=language,
                     response_format="text"
@@ -77,12 +84,16 @@ Lütfen sonuçları JSON formatında döndür:
         
         def _analyze():
             response = self.client.chat.completions.create(
-                model="gpt-4o",
+                model=settings.openai_chat_model,
                 messages=[
-                    {"role": "system", "content": "Sen bir nöroloji araştırmacısısın. Analiz sonuçlarını JSON formatında döndür."},
-                    {"role": "user", "content": prompt}
+                    {
+                        "role": "system",
+                        "content": "Sen bir nöroloji araştırmacısısın. Analiz sonuçlarını JSON formatında döndür.",
+                    },
+                    {"role": "user", "content": prompt},
                 ],
-                response_format={"type": "json_object"}
+                response_format={"type": "json_object"},
+                timeout=settings.openai_timeout_seconds,
             )
             result = json.loads(response.choices[0].message.content)
             return result

@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { getAnalysisResult, AnalysisResult } from '../api/analyze'
+import { downloadReportPdf } from '../api/reports'
 import './ResultsPage.css'
 
 export default function ResultsPage() {
   const { analysisId } = useParams<{ analysisId: string }>()
   const [result, setResult] = useState<AnalysisResult | null>(null)
   const [loading, setLoading] = useState(true)
+  const [downloadingPdf, setDownloadingPdf] = useState(false)
 
   useEffect(() => {
     if (analysisId) {
@@ -22,6 +24,28 @@ export default function ResultsPage() {
       console.error('Sonuc yuklenirken hata:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleDownloadPdf = async () => {
+    if (!result || !result.report_pdf_path) return
+    
+    setDownloadingPdf(true)
+    try {
+      const blob = await downloadReportPdf(result.id)
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `rapor_${result.id}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch (error) {
+      console.error('PDF indirme hatasi:', error)
+      alert('PDF indirilirken hata olustu')
+    } finally {
+      setDownloadingPdf(false)
     }
   }
 
@@ -52,6 +76,21 @@ export default function ResultsPage() {
       <div className="results-header">
         <h1 className="results-title">Analiz Sonuclari</h1>
         <p className="results-subtitle">Ses dosyanizin detayli analiz raporu</p>
+        {result.report_pdf_path && (
+          <button 
+            onClick={handleDownloadPdf}
+            disabled={downloadingPdf}
+            className="btn btn-primary"
+            style={{ marginTop: '1rem' }}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17,8 12,3 7,8"/>
+              <line x1="12" x2="12" y1="3" y2="15"/>
+            </svg>
+            {downloadingPdf ? 'Indiriliyor...' : 'PDF Raporu Indir'}
+          </button>
+        )}
       </div>
 
       <div className="results-grid">
@@ -73,7 +112,7 @@ export default function ResultsPage() {
           </div>
           <div className="section-content">
             <div className="transcript-box">
-              <p className="transcript-text">{result.transcript}</p>
+              <p className="transcript-text">{result.transcript || 'Transkript bulunamadi'}</p>
             </div>
           </div>
         </div>
@@ -157,32 +196,32 @@ export default function ResultsPage() {
             <div className="analysis-grid">
               <div className="analysis-item">
                 <p className="analysis-label">Kelime Sayisi</p>
-                <p className="analysis-value">{result.content_analysis.word_count}</p>
+                <p className="analysis-value">{result.content_analysis?.word_count ?? 0}</p>
               </div>
               <div className="analysis-item">
                 <p className="analysis-label">Benzersiz Kelime</p>
-                <p className="analysis-value">{result.content_analysis.unique_words}</p>
+                <p className="analysis-value">{result.content_analysis?.unique_words ?? 0}</p>
               </div>
               <div className="analysis-item">
                 <p className="analysis-label">Akicilik Skoru</p>
-                <p className="analysis-value">{result.content_analysis.fluency_score}<span style={{fontSize: '1rem', color: 'var(--text-muted)'}}>/10</span></p>
+                <p className="analysis-value">{result.content_analysis?.fluency_score ?? 0}<span style={{fontSize: '1rem', color: 'var(--text-muted)'}}>/10</span></p>
                 <div className="score-meter">
                   <div className="score-bar-container">
                     <div 
                       className="score-bar primary" 
-                      style={{width: `${result.content_analysis.fluency_score * 10}%`}}
+                      style={{width: `${(result.content_analysis?.fluency_score ?? 0) * 10}%`}}
                     ></div>
                   </div>
                 </div>
               </div>
               <div className="analysis-item">
                 <p className="analysis-label">Tutarlilik Skoru</p>
-                <p className="analysis-value">{result.content_analysis.coherence_score}<span style={{fontSize: '1rem', color: 'var(--text-muted)'}}>/10</span></p>
+                <p className="analysis-value">{result.content_analysis?.coherence_score ?? 0}<span style={{fontSize: '1rem', color: 'var(--text-muted)'}}>/10</span></p>
                 <div className="score-meter">
                   <div className="score-bar-container">
                     <div 
                       className="score-bar secondary" 
-                      style={{width: `${result.content_analysis.coherence_score * 10}%`}}
+                      style={{width: `${(result.content_analysis?.coherence_score ?? 0) * 10}%`}}
                     ></div>
                   </div>
                 </div>
@@ -190,6 +229,121 @@ export default function ResultsPage() {
             </div>
           </div>
         </div>
+
+        {/* Advanced Acoustic Features Section */}
+        {result.advanced_acoustic && (
+          <div className="results-section">
+            <div className="section-header">
+              <div className="section-icon acoustic">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M9 18V5l12-2v13"/>
+                  <circle cx="6" cy="18" r="3"/>
+                  <circle cx="18" cy="16" r="3"/>
+                </svg>
+              </div>
+              <div className="section-title-group">
+                <h2 className="section-title">Gelismis Akustik Ozellikler</h2>
+                <p className="section-description">Ses kalitesi ve konusma akisi metrikleri</p>
+              </div>
+            </div>
+            <div className="section-content">
+              <div className="analysis-grid">
+                <div className="analysis-item">
+                  <p className="analysis-label">Jitter (Local)</p>
+                  <p className="analysis-value">{result.advanced_acoustic.jitter.local.toFixed(4)}</p>
+                </div>
+                <div className="analysis-item">
+                  <p className="analysis-label">Shimmer (Local)</p>
+                  <p className="analysis-value">{result.advanced_acoustic.shimmer.local.toFixed(4)}</p>
+                </div>
+                <div className="analysis-item">
+                  <p className="analysis-label">HNR (dB)</p>
+                  <p className="analysis-value">{result.advanced_acoustic.hnr.toFixed(2)}</p>
+                </div>
+                <div className="analysis-item">
+                  <p className="analysis-label">F1 Formant (Hz)</p>
+                  <p className="analysis-value">{result.advanced_acoustic.formants.F1.toFixed(2)}</p>
+                </div>
+                <div className="analysis-item">
+                  <p className="analysis-label">F2 Formant (Hz)</p>
+                  <p className="analysis-value">{result.advanced_acoustic.formants.F2.toFixed(2)}</p>
+                </div>
+                <div className="analysis-item">
+                  <p className="analysis-label">Duraklama Sayisi</p>
+                  <p className="analysis-value">{result.advanced_acoustic.pause_analysis.pause_count}</p>
+                </div>
+                <div className="analysis-item">
+                  <p className="analysis-label">Ort. Duraklama (sn)</p>
+                  <p className="analysis-value">{result.advanced_acoustic.pause_analysis.avg_pause_duration.toFixed(2)}</p>
+                </div>
+                <div className="analysis-item">
+                  <p className="analysis-label">Duraklama %</p>
+                  <p className="analysis-value">{result.advanced_acoustic.pause_analysis.pause_percentage.toFixed(1)}%</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Linguistic Analysis Section */}
+        {result.linguistic_analysis && (
+          <div className="results-section">
+            <div className="section-header">
+              <div className="section-icon content">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                </svg>
+              </div>
+              <div className="section-title-group">
+                <h2 className="section-title">Dilbilimsel Analiz</h2>
+                <p className="section-description">Kelime cesitliligi ve konusma yapisi</p>
+              </div>
+            </div>
+            <div className="section-content">
+              <div className="analysis-grid">
+                <div className="analysis-item">
+                  <p className="analysis-label">Type-Token Ratio</p>
+                  <p className="analysis-value">{result.linguistic_analysis.type_token_ratio.toFixed(3)}</p>
+                </div>
+                <div className="analysis-item">
+                  <p className="analysis-label">Cesitlilik Skoru</p>
+                  <p className="analysis-value">{result.linguistic_analysis.diversity_score.toFixed(1)}</p>
+                </div>
+                <div className="analysis-item">
+                  <p className="analysis-label">Ort. Cumle Uzunlugu</p>
+                  <p className="analysis-value">{result.linguistic_analysis.mean_length_utterance.toFixed(2)}</p>
+                </div>
+                <div className="analysis-item">
+                  <p className="analysis-label">Cumle Sayisi</p>
+                  <p className="analysis-value">{result.linguistic_analysis.sentence_count}</p>
+                </div>
+                <div className="analysis-item">
+                  <p className="analysis-label">Hesitation Sayisi</p>
+                  <p className="analysis-value">{result.linguistic_analysis.hesitation_count}</p>
+                </div>
+                <div className="analysis-item">
+                  <p className="analysis-label">Tekrar Sayisi</p>
+                  <p className="analysis-value">{result.linguistic_analysis.repetition_count}</p>
+                </div>
+                <div className="analysis-item">
+                  <p className="analysis-label">Sozdizimsel Karmasiklik</p>
+                  <p className="analysis-value">{result.linguistic_analysis.syntactic_complexity.toUpperCase()}</p>
+                </div>
+                {result.linguistic_analysis.hesitation_markers.length > 0 && (
+                  <div className="analysis-item" style={{gridColumn: 'span 2'}}>
+                    <p className="analysis-label">Hesitation Marker'lar</p>
+                    <div className="emotion-tags">
+                      {result.linguistic_analysis.hesitation_markers.map((marker, idx) => (
+                        <span key={idx} className="emotion-tag">{marker}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Acoustic Features Section */}
         <div className="results-section">
@@ -202,7 +356,7 @@ export default function ResultsPage() {
               </svg>
             </div>
             <div className="section-title-group">
-              <h2 className="section-title">Akustik Ozellikler</h2>
+              <h2 className="section-title">Temel Akustik Ozellikler</h2>
               <p className="section-description">Ses dosyasindan cikarilan teknik parametreler</p>
             </div>
           </div>
@@ -274,6 +428,53 @@ export default function ResultsPage() {
             </div>
           </div>
         </div>
+
+        {/* Clinical Report Section */}
+        {result.gemini_report ? (
+          <div className="results-section" style={{gridColumn: 'span 2'}}>
+            <div className="section-header">
+              <div className="section-icon content">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                  <polyline points="14,2 14,8 20,8"/>
+                  <line x1="16" x2="8" y1="13" y2="13"/>
+                  <line x1="16" x2="8" y1="17" y2="17"/>
+                </svg>
+              </div>
+              <div className="section-title-group">
+                <h2 className="section-title">Klinik Degerlendirme ve Yorum</h2>
+                <p className="section-description">AI tarafindan hazirlanan kapsamli analiz raporu</p>
+              </div>
+            </div>
+            <div className="section-content">
+              <div className="gemini-report-box">
+                <pre className="gemini-report-text">{result.gemini_report}</pre>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="results-section" style={{gridColumn: 'span 2'}}>
+            <div className="section-header">
+              <div className="section-icon content">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" x2="12" y1="8" y2="12"/>
+                  <line x1="12" x2="12.01" y1="16" y2="16"/>
+                </svg>
+              </div>
+              <div className="section-title-group">
+                <h2 className="section-title">Klinik Degerlendirme ve Yorum</h2>
+                <p className="section-description">AI raporu mevcut degil</p>
+              </div>
+            </div>
+            <div className="section-content">
+              <div style={{ padding: 'var(--spacing-lg)', textAlign: 'center', color: 'var(--text-muted)' }}>
+                <p>AI raporu olusturulamadi. Bu durum API kotasi veya yapilandirma sorunundan kaynaklanabilir.</p>
+                <p style={{ marginTop: 'var(--spacing-sm)', fontSize: '0.9rem' }}>Temel analiz sonuclari yukarida goruntulenmektedir.</p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Actions */}

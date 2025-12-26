@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends
+import os
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from app.core.database import get_db
@@ -94,4 +96,31 @@ async def get_group_reports(
         "group_type": group_type.value,
         "participants": reports
     }
+
+
+@router.get("/pdf/{analysis_id}")
+async def download_report_pdf(
+    analysis_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    """Analiz raporunu PDF olarak indir"""
+    result = await db.execute(
+        select(Analysis).where(Analysis.id == analysis_id)
+    )
+    analysis = result.scalar_one_or_none()
+    
+    if not analysis:
+        raise HTTPException(status_code=404, detail="Analysis not found")
+    
+    if not analysis.report_pdf_path or not os.path.exists(analysis.report_pdf_path):
+        raise HTTPException(
+            status_code=404, 
+            detail="PDF raporu bulunamadı. Lütfen analizi tekrar çalıştırın."
+        )
+    
+    return FileResponse(
+        analysis.report_pdf_path,
+        media_type="application/pdf",
+        filename=f"rapor_{analysis_id}.pdf"
+    )
 

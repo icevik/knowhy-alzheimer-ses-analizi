@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { getParticipants, Participant } from '../api/participants'
 import { analyzeAudio } from '../api/analyze'
 import './AnalyzePage.css'
@@ -13,6 +13,8 @@ export default function AnalyzePage() {
   const [loading, setLoading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState<string>('')
   const [dragOver, setDragOver] = useState(false)
+  const [loadingParticipants, setLoadingParticipants] = useState(true)
+  const [participantsError, setParticipantsError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -24,11 +26,20 @@ export default function AnalyzePage() {
   }, [searchParams])
 
   const loadParticipants = async () => {
+    setLoadingParticipants(true)
+    setParticipantsError(null)
     try {
       const data = await getParticipants()
-      setParticipants(data)
-    } catch (error) {
+      setParticipants(data || [])
+      if (!data || data.length === 0) {
+        setParticipantsError('Henuz kayitli katilimci bulunmamaktadir. Lutfen once katilimci ekleyin.')
+      }
+    } catch (error: any) {
       console.error('Katilimcilar yuklenirken hata:', error)
+      const errorMessage = error.response?.data?.detail || error.message || 'Katilimcilar yuklenirken bir hata olustu'
+      setParticipantsError(errorMessage)
+    } finally {
+      setLoadingParticipants(false)
     }
   }
 
@@ -96,10 +107,16 @@ export default function AnalyzePage() {
       setUploadProgress('Transkripsiyon yapiliyor...')
       const result = await analyzeAudio(selectedParticipantId, file)
       setUploadProgress('Analiz tamamlandi!')
-      navigate(`/results/${result.id}`)
+      setTimeout(() => {
+        navigate(`/results/${result.id}`)
+      }, 500)
     } catch (error: any) {
       setUploadProgress('')
-      alert('Hata: ' + (error.response?.data?.detail || error.message))
+      const errorMessage = error.code === 'ECONNABORTED' 
+        ? 'Analiz islemi zaman asimina ugradi. Lutfen tekrar deneyin.'
+        : error.response?.data?.detail || error.message || 'Bilinmeyen bir hata olustu'
+      alert('Hata: ' + errorMessage)
+      console.error('Analiz hatasi:', error)
     } finally {
       setLoading(false)
     }
@@ -144,19 +161,54 @@ export default function AnalyzePage() {
               </svg>
               Katilimci
             </label>
-            <select
-              className="form-select"
-              required
-              value={selectedParticipantId || ''}
-              onChange={(e) => setSelectedParticipantId(parseInt(e.target.value))}
-            >
-              <option value="">Katilimci secin...</option>
-              {participants.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name} - {p.group_type.toUpperCase()} ({p.age} yas)
-                </option>
-              ))}
-            </select>
+            {loadingParticipants ? (
+              <div className="loading-state">
+                <div className="loading-spinner"></div>
+                <span>Katilimcilar yukleniyor...</span>
+              </div>
+            ) : (
+              <>
+                <select
+                  className="form-select"
+                  required
+                  value={selectedParticipantId || ''}
+                  onChange={(e) => setSelectedParticipantId(parseInt(e.target.value))}
+                  disabled={participants.length === 0}
+                >
+                  <option value="">Katilimci secin...</option>
+                  {participants.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} - {p.group_type.toUpperCase()} ({p.age} yas)
+                    </option>
+                  ))}
+                </select>
+                {participantsError && (
+                  <div className="error-message">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="12" r="10"/>
+                      <line x1="12" x2="12" y1="8" y2="12"/>
+                      <line x1="12" x2="12.01" y1="16" y2="16"/>
+                    </svg>
+                    {participantsError}
+                  </div>
+                )}
+                {participants.length === 0 && !participantsError && (
+                  <div className="warning-message">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="12" r="10"/>
+                      <line x1="12" x2="12" y1="8" y2="12"/>
+                      <line x1="12" x2="12.01" y1="16" y2="16"/>
+                    </svg>
+                    <span>
+                      Henuz kayitli katilimci yok. {' '}
+                      <Link to="/participants/new">
+                        Katilimci eklemek icin tiklayin
+                      </Link>
+                    </span>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
 

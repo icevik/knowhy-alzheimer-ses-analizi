@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getAllAnalyses, getAnalysisResult, AnalysisListItem, AnalysisResult } from '../api/analyze'
+import { getAllAnalyses, getAnalysisResult, deleteAnalysis, AnalysisListItem, AnalysisResult } from '../api/analyze'
 import { getParticipant, Participant } from '../api/participants'
 import Modal from './Modal'
 import './HistoryModal.css'
@@ -16,6 +16,7 @@ export default function HistoryModal({ isOpen, onClose, onViewDetails }: History
   const [loading, setLoading] = useState(true)
   const [selectedAnalysis, setSelectedAnalysis] = useState<AnalysisResult | null>(null)
   const [showDetails, setShowDetails] = useState(false)
+  const [deletingId, setDeletingId] = useState<number | null>(null)
 
   useEffect(() => {
     if (isOpen) {
@@ -62,6 +63,26 @@ export default function HistoryModal({ isOpen, onClose, onViewDetails }: History
       setShowDetails(true)
     } catch (error) {
       console.error('Analiz detayı yüklenirken hata:', error)
+    }
+  }
+
+  const handleDelete = async (analysisId: number, event: React.MouseEvent) => {
+    event.stopPropagation()
+    
+    if (!confirm('Bu analizi silmek istediginizden emin misiniz? Bu islem geri alinamaz.')) {
+      return
+    }
+    
+    setDeletingId(analysisId)
+    try {
+      await deleteAnalysis(analysisId)
+      // Listeyi güncelle
+      setAnalyses(prev => prev.filter(a => a.id !== analysisId))
+    } catch (error) {
+      console.error('Analiz silinirken hata:', error)
+      alert('Analiz silinirken bir hata olustu. Lutfen tekrar deneyin.')
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -296,6 +317,21 @@ export default function HistoryModal({ isOpen, onClose, onViewDetails }: History
                         <polyline points="9,18 15,12 9,6"/>
                       </svg>
                       Tam Sayfa
+                    </button>
+                    <button
+                      className="btn btn-danger btn-sm"
+                      onClick={(e) => handleDelete(analysis.id, e)}
+                      disabled={deletingId === analysis.id}
+                    >
+                      {deletingId === analysis.id ? (
+                        <span className="loading-spinner-small"></span>
+                      ) : (
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <polyline points="3,6 5,6 21,6"/>
+                          <path d="M19,6v14a2,2 0,0,1 -2,2H7a2,2 0,0,1 -2,-2V6m3,0V4a2,2 0,0,1 2,-2h4a2,2 0,0,1 2,2v2"/>
+                        </svg>
+                      )}
+                      Sil
                     </button>
                   </div>
                 </div>

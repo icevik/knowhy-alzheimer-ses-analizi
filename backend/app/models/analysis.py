@@ -14,6 +14,10 @@ class Analysis(Base):
     acoustic_features = Column(JSON, nullable=True)
     emotion_analysis = Column(JSON, nullable=True)
     content_analysis = Column(JSON, nullable=True)
+    advanced_acoustic = Column(JSON, nullable=True)
+    linguistic_analysis = Column(JSON, nullable=True)
+    gemini_report = Column(Text, nullable=True)
+    report_pdf_path = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     participant = relationship("Participant", back_populates="analyses")

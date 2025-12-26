@@ -16,6 +16,38 @@ export interface AnalysisResult {
     }
     tempo: number
   }
+  advanced_acoustic?: {
+    jitter: { local: number; rap: number; ppq5: number }
+    shimmer: { local: number; apq3: number; apq5: number }
+    hnr: number
+    formants: { F1: number; F2: number; F3: number; F4: number }
+    speech_rate_audio: number
+    pause_analysis: {
+      total_pause_time: number
+      pause_count: number
+      avg_pause_duration: number
+      pause_percentage: number
+    }
+    voice_onset_time: number
+  }
+  linguistic_analysis?: {
+    word_count: number
+    unique_word_count: number
+    type_token_ratio: number
+    diversity_score: number
+    mean_length_utterance: number
+    sentence_count: number
+    avg_sentence_length: number
+    hesitation_markers: string[]
+    hesitation_count: number
+    hesitation_ratio: number
+    repetitions: Array<{ word: string; count: number; position: number }>
+    repetition_count: number
+    repetition_ratio: number
+    conjunction_count: number
+    conjunction_ratio: number
+    syntactic_complexity: string
+  }
   emotion_analysis: {
     tone: string
     intensity: number
@@ -27,6 +59,8 @@ export interface AnalysisResult {
     fluency_score: number
     coherence_score: number
   }
+  gemini_report?: string
+  report_pdf_path?: string
   created_at: string
 }
 
@@ -45,6 +79,7 @@ export const analyzeAudio = async (
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+      timeout: 300000, // 5 dakika timeout (analiz uzun sürebilir)
     }
   )
   return response.data
@@ -72,6 +107,8 @@ export interface AnalysisListItem {
     fluency_score: number
     coherence_score: number
   }
+  has_gemini_report?: boolean
+  has_pdf?: boolean
   created_at: string
 }
 
@@ -86,5 +123,9 @@ export const getAllAnalyses = async (
 ): Promise<AnalysesListResponse> => {
   const response = await client.get(`/api/results/?limit=${limit}&offset=${offset}`)
   return response.data
+}
+
+export const deleteAnalysis = async (analysisId: number): Promise<void> => {
+  await client.delete(`/api/results/${analysisId}`)
 }
 
