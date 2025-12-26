@@ -6,28 +6,37 @@ from typing import Dict
 class AudioService:
     @staticmethod
     def extract_features(audio_path: str) -> Dict:
-        """librosa ile ses dosyasından akustik özellikler çıkar"""
-        y, sr = librosa.load(audio_path, sr=None)
+        """librosa ile ses dosyasından akustik özellikler çıkar (optimize edilmiş)"""
+        # Sabit sample rate ile yükle (hız optimizasyonu)
+        TARGET_SR = 22050
+        y, sr = librosa.load(audio_path, sr=TARGET_SR, mono=True)
         
         # Temel özellikler
         duration = librosa.get_duration(y=y, sr=sr)
+        print(f"[Audio] Yuklendi: {duration:.1f}s, {len(y)} sample", flush=True)
         
         # Enerji (RMS)
         rms = librosa.feature.rms(y=y)[0]
         mean_energy = float(np.mean(rms))
         max_energy = float(np.max(rms))
         
-        # Temel frekans (pitch)
-        pitches, magnitudes = librosa.piptrack(y=y, sr=sr)
-        pitch_values = []
-        for t in range(pitches.shape[1]):
-            index = magnitudes[:, t].argmax()
-            pitch = pitches[index, t]
-            if pitch > 0:
-                pitch_values.append(pitch)
-        
-        mean_pitch = float(np.mean(pitch_values)) if pitch_values else 0.0
-        std_pitch = float(np.std(pitch_values)) if pitch_values else 0.0
+        # Temel frekans (pitch) - pyin daha hızlı ve doğru
+        try:
+            # pyin kullan - daha hızlı
+            f0, voiced_flag, voiced_probs = librosa.pyin(
+                y, 
+                fmin=librosa.note_to_hz('C2'), 
+                fmax=librosa.note_to_hz('C7'),
+                sr=sr,
+                frame_length=2048
+            )
+            pitch_values = f0[~np.isnan(f0)] if f0 is not None else np.array([])
+            mean_pitch = float(np.mean(pitch_values)) if len(pitch_values) > 0 else 0.0
+            std_pitch = float(np.std(pitch_values)) if len(pitch_values) > 0 else 0.0
+        except Exception as e:
+            print(f"[Audio] Pitch analizi hatası: {e}", flush=True)
+            mean_pitch = 0.0
+            std_pitch = 0.0
         
         # MFCC (Mel-frequency cepstral coefficients)
         mfccs = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13)
@@ -44,9 +53,12 @@ class AudioService:
         zero_crossing_rate = librosa.feature.zero_crossing_rate(y)[0]
         mean_zcr = float(np.mean(zero_crossing_rate))
         
-        # Tempo (BPM)
-        tempo, _ = librosa.beat.beat_track(y=y, sr=sr)
-        tempo = float(tempo) if tempo else 0.0
+        # Tempo (BPM) - uzun dosyalarda yavaş olabilir, opsiyonel
+        try:
+            tempo, _ = librosa.beat.beat_track(y=y, sr=sr)
+            tempo = float(tempo) if tempo else 0.0
+        except Exception:
+            tempo = 0.0
         
         return {
             "duration": duration,

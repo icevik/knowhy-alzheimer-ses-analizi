@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import ReactMarkdown from 'react-markdown'
 import { getAnalysisResult, AnalysisResult } from '../api/analyze'
 import { downloadReportPdf } from '../api/reports'
 import './ResultsPage.css'
@@ -196,35 +197,57 @@ export default function ResultsPage() {
             <div className="analysis-grid">
               <div className="analysis-item">
                 <p className="analysis-label">Kelime Sayisi</p>
-                <p className="analysis-value">{result.content_analysis?.word_count ?? 0}</p>
+                <p className="analysis-value">
+                  {result.content_analysis?.word_count || result.linguistic_analysis?.word_count || 0}
+                </p>
               </div>
               <div className="analysis-item">
                 <p className="analysis-label">Benzersiz Kelime</p>
-                <p className="analysis-value">{result.content_analysis?.unique_words ?? 0}</p>
+                <p className="analysis-value">
+                  {result.content_analysis?.unique_words || result.linguistic_analysis?.unique_word_count || 0}
+                </p>
               </div>
               <div className="analysis-item">
                 <p className="analysis-label">Akicilik Skoru</p>
-                <p className="analysis-value">{result.content_analysis?.fluency_score ?? 0}<span style={{fontSize: '1rem', color: 'var(--text-muted)'}}>/10</span></p>
-                <div className="score-meter">
-                  <div className="score-bar-container">
-                    <div 
-                      className="score-bar primary" 
-                      style={{width: `${(result.content_analysis?.fluency_score ?? 0) * 10}%`}}
-                    ></div>
-                  </div>
-                </div>
+                {(() => {
+                  // Fluency: content_analysis varsa kullan, yoksa hesitation_ratio'dan hesapla
+                  let fluency = result.content_analysis?.fluency_score ?? 0;
+                  if (!fluency && result.linguistic_analysis?.hesitation_ratio !== undefined) {
+                    // Düşük duraklatma oranı = yüksek akıcılık
+                    fluency = Math.round((1 - Math.min(result.linguistic_analysis.hesitation_ratio * 5, 1)) * 10);
+                  }
+                  return (
+                    <>
+                      <p className="analysis-value">{fluency}<span style={{fontSize: '1rem', color: 'var(--text-muted)'}}>/10</span></p>
+                      <div className="score-meter">
+                        <div className="score-bar-container">
+                          <div className="score-bar primary" style={{width: `${fluency * 10}%`}}></div>
+                        </div>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
               <div className="analysis-item">
                 <p className="analysis-label">Tutarlilik Skoru</p>
-                <p className="analysis-value">{result.content_analysis?.coherence_score ?? 0}<span style={{fontSize: '1rem', color: 'var(--text-muted)'}}>/10</span></p>
-                <div className="score-meter">
-                  <div className="score-bar-container">
-                    <div 
-                      className="score-bar secondary" 
-                      style={{width: `${(result.content_analysis?.coherence_score ?? 0) * 10}%`}}
-                    ></div>
-                  </div>
-                </div>
+                {(() => {
+                  // Coherence: content_analysis varsa kullan, yoksa repetition_ratio'dan hesapla
+                  let coherence = result.content_analysis?.coherence_score ?? 0;
+                  if (!coherence && result.linguistic_analysis?.repetition_ratio !== undefined) {
+                    // Düşük tekrar oranı = yüksek tutarlılık
+                    coherence = Math.round((1 - Math.min(result.linguistic_analysis.repetition_ratio * 10, 1)) * 10);
+                  }
+                  return (
+                    <>
+                      <p className="analysis-value">{coherence}<span style={{fontSize: '1rem', color: 'var(--text-muted)'}}>/10</span></p>
+                      <div className="score-meter">
+                        <div className="score-bar-container">
+                          <div className="score-bar secondary" style={{width: `${coherence * 10}%`}}></div>
+                        </div>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             </div>
           </div>
@@ -448,7 +471,11 @@ export default function ResultsPage() {
             </div>
             <div className="section-content">
               <div className="gemini-report-box">
-                <pre className="gemini-report-text">{result.gemini_report}</pre>
+                <div className="gemini-report-text">
+                  <ReactMarkdown>
+                    {result.gemini_report}
+                  </ReactMarkdown>
+                </div>
               </div>
             </div>
           </div>

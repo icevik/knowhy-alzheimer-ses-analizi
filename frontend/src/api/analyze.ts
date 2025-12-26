@@ -66,11 +66,15 @@ export interface AnalysisResult {
 
 export const analyzeAudio = async (
   participantId: number,
-  file: File
+  file: File,
+  progressId?: string
 ): Promise<AnalysisResult> => {
   const formData = new FormData()
   formData.append('file', file)
   formData.append('participant_id', participantId.toString())
+  if (progressId) {
+    formData.append('progress_id', progressId)
+  }
   
   const response = await client.post(
     '/api/analyze/',
@@ -79,7 +83,7 @@ export const analyzeAudio = async (
       headers: {
         'Content-Type': 'multipart/form-data',
       },
-      timeout: 300000, // 5 dakika timeout (analiz uzun sürebilir)
+      timeout: 600000, // 10 dakika timeout (analiz uzun sürebilir)
     }
   )
   return response.data

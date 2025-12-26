@@ -424,10 +424,119 @@
   font-size: 0.95rem;
   line-height: 1.8;
   color: var(--text-primary);
-  white-space: pre-wrap;
-  word-wrap: break-word;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   margin: 0;
+}
+
+/* Markdown styling */
+.gemini-report-text h1,
+.gemini-report-text h2,
+.gemini-report-text h3,
+.gemini-report-text h4 {
+  color: var(--text-primary);
+  font-weight: 600;
+  margin-top: 1.5em;
+  margin-bottom: 0.75em;
+  line-height: 1.3;
+}
+
+.gemini-report-text h1 {
+  font-size: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 0.5em;
+}
+
+.gemini-report-text h2 {
+  font-size: 1.3rem;
+}
+
+.gemini-report-text h3 {
+  font-size: 1.1rem;
+}
+
+.gemini-report-text h4 {
+  font-size: 1rem;
+}
+
+.gemini-report-text p {
+  margin: 0.75em 0;
+  color: var(--text-secondary);
+}
+
+.gemini-report-text strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.gemini-report-text em {
+  font-style: italic;
+}
+
+.gemini-report-text ul,
+.gemini-report-text ol {
+  margin: 0.75em 0;
+  padding-left: 1.5em;
+  color: var(--text-secondary);
+}
+
+.gemini-report-text li {
+  margin: 0.5em 0;
+}
+
+.gemini-report-text code {
+  background: rgba(0, 163, 255, 0.1);
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.9em;
+  color: #60a5fa;
+}
+
+.gemini-report-text pre {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 1em;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 1em 0;
+}
+
+.gemini-report-text pre code {
+  background: transparent;
+  padding: 0;
+  color: var(--text-primary);
+}
+
+.gemini-report-text blockquote {
+  border-left: 3px solid rgba(0, 163, 255, 0.5);
+  padding-left: 1em;
+  margin: 1em 0;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.gemini-report-text hr {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin: 2em 0;
+}
+
+.gemini-report-text table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0;
+}
+
+.gemini-report-text th,
+.gemini-report-text td {
+  padding: 0.5em;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: left;
+}
+
+.gemini-report-text th {
+  background: rgba(255, 255, 255, 0.05);
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .gemini-report-box::-webkit-scrollbar {

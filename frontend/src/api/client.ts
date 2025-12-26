@@ -7,7 +7,7 @@ const client = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 300000, // 5 dakika (analiz uzun sürebilir)
+  timeout: 600000, // 10 dakika (analiz uzun sürebilir)
 })
 
 export default client

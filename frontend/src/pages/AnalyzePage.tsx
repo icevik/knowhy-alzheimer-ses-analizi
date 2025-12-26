@@ -2,7 +2,17 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { getParticipants, Participant } from '../api/participants'
 import { analyzeAudio } from '../api/analyze'
+import AnalysisTimeline from '../components/AnalysisTimeline'
 import './AnalyzePage.css'
+
+// UUID generator
+function generateUUID(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0
+    const v = c === 'x' ? r : (r & 0x3 | 0x8)
+    return v.toString(16)
+  })
+}
 
 export default function AnalyzePage() {
   const navigate = useNavigate()
@@ -11,7 +21,7 @@ export default function AnalyzePage() {
   const [selectedParticipantId, setSelectedParticipantId] = useState<number | null>(null)
   const [file, setFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
-  const [uploadProgress, setUploadProgress] = useState<string>('')
+  const [progressId, setProgressId] = useState<string | null>(null)
   const [dragOver, setDragOver] = useState(false)
   const [loadingParticipants, setLoadingParticipants] = useState(true)
   const [participantsError, setParticipantsError] = useState<string | null>(null)
@@ -100,18 +110,19 @@ export default function AnalyzePage() {
       return
     }
 
+    // Progress ID olustur ve SSE baglantisini baslat
+    const newProgressId = generateUUID()
+    setProgressId(newProgressId)
     setLoading(true)
-    setUploadProgress('Dosya yukleniyor...')
 
     try {
-      setUploadProgress('Transkripsiyon yapiliyor...')
-      const result = await analyzeAudio(selectedParticipantId, file)
-      setUploadProgress('Analiz tamamlandi!')
+      const result = await analyzeAudio(selectedParticipantId, file, newProgressId)
+      // Kisa gecikme ile sonuc sayfasina yonlendir
       setTimeout(() => {
         navigate(`/results/${result.id}`)
-      }, 500)
+      }, 1000)
     } catch (error: any) {
-      setUploadProgress('')
+      setProgressId(null)
       const errorMessage = error.code === 'ECONNABORTED' 
         ? 'Analiz islemi zaman asimina ugradi. Lutfen tekrar deneyin.'
         : error.response?.data?.detail || error.message || 'Bilinmeyen bir hata olustu'
@@ -268,20 +279,12 @@ export default function AnalyzePage() {
           </div>
         </div>
 
-        {/* Progress */}
-        {loading && uploadProgress && (
-          <div className="progress-section">
-            <div className="progress-card">
-              <div className="progress-header">
-                <div className="progress-spinner"></div>
-                <span className="progress-title">Analiz Ediliyor</span>
-              </div>
-              <div className="progress-bar-container">
-                <div className="progress-bar" style={{ width: '100%' }}></div>
-              </div>
-              <p className="progress-status">{uploadProgress}</p>
-            </div>
-          </div>
+        {/* Progress Timeline */}
+        {loading && (
+          <AnalysisTimeline 
+            progressId={progressId} 
+            isAnalyzing={loading}
+          />
         )}
 
         {/* Submit */}
