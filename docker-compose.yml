@@ -3,16 +3,17 @@ version: '3.8'
 services:
   postgres:
     image: postgres:15-alpine
+    container_name: knowhy_postgres
     environment:
-      POSTGRES_USER: voiceanalyzer
-      POSTGRES_PASSWORD: voiceanalyzer_pass
-      POSTGRES_DB: voiceanalyzer_db
+      POSTGRES_USER: knowhy
+      POSTGRES_PASSWORD: knowhy_pass
+      POSTGRES_DB: knowhy_db
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U voiceanalyzer"]
+      test: ["CMD-SHELL", "pg_isready -U knowhy"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -21,12 +22,13 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    container_name: knowhy_backend
     ports:
       - "8000:8000"
     env_file:
       - .env
     environment:
-      DATABASE_URL: postgresql+asyncpg://voiceanalyzer:voiceanalyzer_pass@postgres:5432/voiceanalyzer_db
+      DATABASE_URL: postgresql+asyncpg://knowhy:knowhy_pass@postgres:5432/knowhy_db
     volumes:
       - ./backend:/app
       - audio_uploads:/app/uploads
@@ -39,6 +41,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    container_name: knowhy_frontend
     ports:
       - "3000:3000"
     volumes:
@@ -53,5 +56,7 @@ services:
 
 volumes:
   postgres_data:
+    name: knowhy_postgres_data
   audio_uploads:
+    name: knowhy_audio_uploads
 

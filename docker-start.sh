@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "TUBITAK Ses Analiz Platformu - Docker Başlatılıyor..."
+echo "KNOWHY Alzheimer Analiz Platformu - Docker Başlatılıyor..."
 
 # .env dosyası kontrolü
 if [ ! -f .env ]; then

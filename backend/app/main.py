@@ -1,9 +1,14 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.routes import participants, analyze, results, reports
+from app.api.routes import participants, analyze, results, reports, auth
 from app.core.database import engine, Base
+from app.models import User, EmailVerification, RateLimit, Participant, Analysis
 
-app = FastAPI(title="TUBITAK Voice Analyzer API", version="1.0.0")
+app = FastAPI(
+    title="KNOWHY Alzheimer Analiz API",
+    description="Ses analizi ile Alzheimer ve MCI tespiti için API (Powered by KNOWHY)",
+    version="1.0.0"
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -14,6 +19,7 @@ app.add_middleware(
     expose_headers=["*"],
 )
 
+app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(participants.router, prefix="/api/participants", tags=["participants"])
 app.include_router(analyze.router, prefix="/api/analyze", tags=["analyze"])
 app.include_router(results.router, prefix="/api/results", tags=["results"])
@@ -36,4 +42,5 @@ async def startup():
 @app.get("/")
 async def root():
     return {"message": "TUBITAK Voice Analyzer API"}
+
 

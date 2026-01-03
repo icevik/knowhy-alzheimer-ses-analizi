@@ -6,6 +6,8 @@ from datetime import datetime
 from pydantic import BaseModel
 from app.core.database import get_db
 from app.models.participant import Participant, GroupType
+from app.models.user import User
+from app.api.dependencies import get_current_user
 
 router = APIRouter()
 
@@ -34,9 +36,13 @@ class ParticipantResponse(BaseModel):
 @router.post("/", response_model=ParticipantResponse)
 async def create_participant(
     participant: ParticipantCreate,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
-    db_participant = Participant(**participant.dict())
+    db_participant = Participant(
+        user_id=current_user.id,
+        **participant.dict()
+    )
     db.add(db_participant)
     await db.commit()
     await db.refresh(db_participant)
@@ -44,8 +50,13 @@ async def create_participant(
 
 
 @router.get("/", response_model=List[ParticipantResponse])
-async def get_participants(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Participant))
+async def get_participants(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    result = await db.execute(
+        select(Participant).where(Participant.user_id == current_user.id)
+    )
     participants = result.scalars().all()
     return participants
 
@@ -53,13 +64,16 @@ async def get_participants(db: AsyncSession = Depends(get_db)):
 @router.get("/{participant_id}", response_model=ParticipantResponse)
 async def get_participant(
     participant_id: int,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     result = await db.execute(
-        select(Participant).where(Participant.id == participant_id)
+        select(Participant).where(
+            Participant.id == participant_id,
+            Participant.user_id == current_user.id
+        )
     )
     participant = result.scalar_one_or_none()
     if not participant:
-        raise HTTPException(status_code=404, detail="Participant not found")
+        raise HTTPException(status_code=404, detail="Katılımcı bulunamadı")
     return participant
-

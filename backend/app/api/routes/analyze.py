@@ -10,6 +10,7 @@ from app.core.database import get_db
 from app.core.config import settings
 from app.models.analysis import Analysis
 from app.models.participant import Participant
+from app.models.user import User
 from app.services.openai_service import openai_service
 from app.services.audio_service import audio_service
 from app.services.advanced_audio_service import advanced_audio_service
@@ -17,6 +18,7 @@ from app.services.linguistic_service import linguistic_service
 from app.services.openrouter_service import openrouter_service
 from app.services.report_service import report_service
 from app.services.progress_store import set_progress, get_progress, clear_progress, subscribe, unsubscribe
+from app.api.dependencies import get_current_user
 
 router = APIRouter()
 
@@ -78,7 +80,8 @@ async def analyze_audio(
     participant_id: int = Form(...),
     file: UploadFile = File(...),
     progress_id: str = Form(None),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     # Dosya formatı kontrolü
     if not file.filename.endswith(('.wav', '.mp3', '.m4a', '.webm')):
@@ -95,13 +98,16 @@ async def analyze_audio(
             detail=f"Dosya boyutu {settings.max_file_size / 1024 / 1024}MB'dan büyük olamaz."
         )
     
-    # Katılımcı kontrolü
+    # Katılımcı kontrolü - sadece kullanıcının kendi katılımcıları
     result = await db.execute(
-        select(Participant).where(Participant.id == participant_id)
+        select(Participant).where(
+            Participant.id == participant_id,
+            Participant.user_id == current_user.id
+        )
     )
     participant = result.scalar_one_or_none()
     if not participant:
-        raise HTTPException(status_code=404, detail="Participant not found")
+        raise HTTPException(status_code=404, detail="Katılımcı bulunamadı veya erişim izniniz yok")
     
     # Progress ID - frontend'den gelen veya yeni oluştur
     if not progress_id:
@@ -146,8 +152,8 @@ async def analyze_audio(
         print(f"[Analiz] 4/9 Tamamlandi ({time.time() - start_time:.1f}s)", flush=True)
         
         # 5. GPT-4 ile duygu ve içerik analizi
-        set_progress(progress_id, 6, "Duygu ve içerik analizi yapılıyor (GPT-4)...")
-        print(f"[Analiz] 5/9 Duygu ve icerik analizi yapiliyor (GPT-4)...", flush=True)
+        set_progress(progress_id, 6, "Duygu ve içerik analizi yapılıyor...")
+        print(f"[Analiz] 5/9 Duygu ve icerik analizi yapiliyor...", flush=True)
         analysis_result = await openai_service.analyze_content_and_emotion(
             transcript, acoustic_features
         )
@@ -205,6 +211,7 @@ async def analyze_audio(
         set_progress(progress_id, 9, "Veritabanına kaydediliyor...")
         print(f"[Analiz] 8/9 Veritabanina kaydediliyor...", flush=True)
         db_analysis = Analysis(
+            user_id=current_user.id,
             participant_id=participant_id,
             audio_path=file_path,
             transcript=transcript,

@@ -1,6 +1,6 @@
 # TUBITAK Ses Analiz Platformu - Docker Başlatma Scripti (PowerShell)
 
-Write-Host "TUBITAK Ses Analiz Platformu - Docker Başlatılıyor..." -ForegroundColor Cyan
+Write-Host "KNOWHY Alzheimer Analiz Platformu - Docker Başlatılıyor..." -ForegroundColor Cyan
 
 # .env dosyası kontrolü
 if (-not (Test-Path .env)) {

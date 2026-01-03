@@ -47,8 +47,8 @@ class OpenRouterService:
                     headers={
                         "Authorization": f"Bearer {self.api_key}",
                         "Content-Type": "application/json",
-                        "HTTP-Referer": "https://github.com/tubitak-voiceanalyzer",
-                        "X-Title": "TUBITAK Voice Analyzer"
+                        "HTTP-Referer": "https://github.com/knowhy-alzheimer-analysis",
+                        "X-Title": "KNOWHY Alzheimer Analysis"
                     },
                     json={
                         "model": self.model,

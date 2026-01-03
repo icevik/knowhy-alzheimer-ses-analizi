@@ -97,7 +97,7 @@ export default function AnalysisTimeline({ progressId, isAnalyzing, onComplete }
 
     // İlk poll hemen yap
     pollProgress()
-    
+
     // Her 500ms'de bir poll yap (daha hızlı güncelleme)
     const interval = setInterval(pollProgress, 500)
     return () => clearInterval(interval)
@@ -118,10 +118,10 @@ export default function AnalysisTimeline({ progressId, isAnalyzing, onComplete }
   return (
     <div className="analysis-timeline">
       <div className="timeline-header">
-        <h3>Analiz İlerlemesi</h3>
+        <h3>Analiz İlerlemesi (Ekran donmuş gibi görünebilir. Lütfen bekleyiniz)</h3>
         <span className="step-counter">Adım {currentStep} / {steps.length}</span>
       </div>
-      
+
       <div className="timeline-container">
         {steps.map((step, index) => {
           const status = getStepStatus(step.step)
@@ -141,12 +141,12 @@ export default function AnalysisTimeline({ progressId, isAnalyzing, onComplete }
                 </div>
                 {index < steps.length - 1 && <div className="step-line" />}
               </div>
-              
+
               <div className="step-content">
                 <div className="step-title">{step.title}</div>
                 <div className="step-description">
-                  {status === 'active' && progress?.message 
-                    ? progress.message 
+                  {status === 'active' && progress?.message
+                    ? progress.message
                     : step.description}
                 </div>
               </div>
@@ -157,14 +157,14 @@ export default function AnalysisTimeline({ progressId, isAnalyzing, onComplete }
 
       <div className="timeline-footer">
         <div className="progress-bar">
-          <div 
-            className="progress-fill" 
+          <div
+            className="progress-fill"
             style={{ width: `${(currentStep / steps.length) * 100}%` }}
           />
         </div>
         <p className="progress-text">
-          {progress?.status === 'completed' 
-            ? 'Analiz tamamlandı!' 
+          {progress?.status === 'completed'
+            ? 'Analiz tamamlandı!'
             : 'Analiz devam ediyor, lütfen bekleyin...'}
         </p>
       </div>
