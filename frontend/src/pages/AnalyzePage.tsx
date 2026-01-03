@@ -7,7 +7,7 @@ import './AnalyzePage.css'
 
 // UUID generator
 function generateUUID(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
     const r = Math.random() * 16 | 0
     const v = c === 'x' ? r : (r & 0x3 | 0x8)
     return v.toString(16)
@@ -99,12 +99,12 @@ export default function AnalyzePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!selectedParticipantId) {
       alert('Lutfen bir katilimci secin')
       return
     }
-    
+
     if (!file) {
       alert('Lutfen bir ses dosyasi secin')
       return
@@ -123,7 +123,7 @@ export default function AnalyzePage() {
       }, 1000)
     } catch (error: any) {
       setProgressId(null)
-      const errorMessage = error.code === 'ECONNABORTED' 
+      const errorMessage = error.code === 'ECONNABORTED'
         ? 'Analiz islemi zaman asimina ugradi. Lutfen tekrar deneyin.'
         : error.response?.data?.detail || error.message || 'Bilinmeyen bir hata olustu'
       alert('Hata: ' + errorMessage)
@@ -141,7 +141,7 @@ export default function AnalyzePage() {
         <h1 className="analyze-title">Ses Analizi</h1>
         <p className="analyze-subtitle">Katilimci secin ve ses dosyasini yukleyerek analiz baslatin</p>
       </div>
-      
+
       <form onSubmit={handleSubmit} className="analyze-card">
         {/* Steps indicator */}
         <div className="steps-indicator">
@@ -167,8 +167,8 @@ export default function AnalyzePage() {
           <div className="form-group">
             <label className="form-label">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-                <circle cx="9" cy="7" r="4"/>
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
               </svg>
               Katilimci
             </label>
@@ -196,9 +196,9 @@ export default function AnalyzePage() {
                 {participantsError && (
                   <div className="error-message">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="12" cy="12" r="10"/>
-                      <line x1="12" x2="12" y1="8" y2="12"/>
-                      <line x1="12" x2="12.01" y1="16" y2="16"/>
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" x2="12" y1="8" y2="12" />
+                      <line x1="12" x2="12.01" y1="16" y2="16" />
                     </svg>
                     {participantsError}
                   </div>
@@ -206,9 +206,9 @@ export default function AnalyzePage() {
                 {participants.length === 0 && !participantsError && (
                   <div className="warning-message">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="12" cy="12" r="10"/>
-                      <line x1="12" x2="12" y1="8" y2="12"/>
-                      <line x1="12" x2="12.01" y1="16" y2="16"/>
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" x2="12" y1="8" y2="12" />
+                      <line x1="12" x2="12.01" y1="16" y2="16" />
                     </svg>
                     <span>
                       Henuz kayitli katilimci yok. {' '}
@@ -227,7 +227,7 @@ export default function AnalyzePage() {
         <div className="form-section">
           <h3 className="form-section-title">Ses Dosyasi</h3>
           <div className="form-group">
-            <div 
+            <div
               className={`file-upload-zone ${dragOver ? 'drag-over' : ''} ${file ? 'has-file' : ''}`}
               onDrop={handleDrop}
               onDragOver={handleDragOver}
@@ -241,24 +241,24 @@ export default function AnalyzePage() {
               />
               <div className="upload-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                  <polyline points="17,8 12,3 7,8"/>
-                  <line x1="12" x2="12" y1="3" y2="15"/>
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17,8 12,3 7,8" />
+                  <line x1="12" x2="12" y1="3" y2="15" />
                 </svg>
               </div>
               <p className="upload-text">
                 Dosyayi buraya <strong>surukleyin</strong> veya <strong>tiklayin</strong>
               </p>
-              <p className="upload-hint">WAV, MP3, M4A, WEBM - Maks 50MB</p>
+              <p className="upload-hint">WAV, MP3, M4A, WEBM - Maks 50MB - 6 dakika uzunlukta</p>
             </div>
 
             {file && (
               <div className="file-info-card">
                 <div className="file-icon">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M9 18V5l12-2v13"/>
-                    <circle cx="6" cy="18" r="3"/>
-                    <circle cx="18" cy="16" r="3"/>
+                    <path d="M9 18V5l12-2v13" />
+                    <circle cx="6" cy="18" r="3" />
+                    <circle cx="18" cy="16" r="3" />
                   </svg>
                 </div>
                 <div className="file-details">
@@ -270,8 +270,8 @@ export default function AnalyzePage() {
                 </div>
                 <button type="button" className="file-remove" onClick={removeFile}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <line x1="18" x2="6" y1="6" y2="18"/>
-                    <line x1="6" x2="18" y1="6" y2="18"/>
+                    <line x1="18" x2="6" y1="6" y2="18" />
+                    <line x1="6" x2="18" y1="6" y2="18" />
                   </svg>
                 </button>
               </div>
@@ -281,23 +281,23 @@ export default function AnalyzePage() {
 
         {/* Progress Timeline */}
         {loading && (
-          <AnalysisTimeline 
-            progressId={progressId} 
+          <AnalysisTimeline
+            progressId={progressId}
             isAnalyzing={loading}
           />
         )}
 
         {/* Submit */}
         <div className="submit-section">
-          <button 
-            type="submit" 
-            disabled={loading || !selectedParticipantId || !file} 
+          <button
+            type="submit"
+            disabled={loading || !selectedParticipantId || !file}
             className={`btn btn-primary ${loading ? 'btn-loading' : ''}`}
           >
             {!loading && (
               <>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <polygon points="5,3 19,12 5,21 5,3"/>
+                  <polygon points="5,3 19,12 5,21 5,3" />
                 </svg>
                 Analizi Baslat
               </>
@@ -311,9 +311,9 @@ export default function AnalyzePage() {
         <div className="tips-card">
           <h4 className="tips-title">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="12" x2="12" y1="16" y2="12"/>
-              <line x1="12" x2="12.01" y1="8" y2="8"/>
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" x2="12" y1="16" y2="12" />
+              <line x1="12" x2="12.01" y1="8" y2="8" />
             </svg>
             Daha Iyi Sonuclar Icin
           </h4>

@@ -27,7 +27,7 @@ const DEFAULT_STEPS: Step[] = [
   { step: 3, title: "Gelişmiş Akustik", description: "Jitter, shimmer, formant analizi..." },
   { step: 4, title: "Transkripsiyon", description: "Konuşma metne dönüştürülüyor (Whisper)..." },
   { step: 5, title: "Dilbilimsel Analiz", description: "Metin analizi yapılıyor..." },
-  { step: 6, title: "Duygu Analizi", description: "Duygu ve içerik analizi (GPT-4)..." },
+  { step: 6, title: "Duygu Analizi", description: "Duygu ve içerik analizi..." },
   { step: 7, title: "Klinik Rapor", description: "AI klinik raporu oluşturuluyor..." },
   { step: 8, title: "PDF Oluşturma", description: "PDF rapor hazırlanıyor..." },
   { step: 9, title: "Kayıt", description: "Veritabanına kaydediliyor..." },

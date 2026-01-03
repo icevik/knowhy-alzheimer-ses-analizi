@@ -38,13 +38,16 @@ class ReportService:
         """Her sayfaya header ve footer ekle"""
         canvas.saveState()
         
-        # Footer
+        # Footer Sol
         footer_text = "KNOWHY Alzheimer Analiz Raporu"
         canvas.setFont(TURKISH_FONT, 8)
         canvas.setFillColor(colors.HexColor('#666666'))
         canvas.drawString(2*cm, 1.5*cm, footer_text)
         
-        # Sayfa numarası
+        # Footer Orta - Web Sitesi
+        canvas.drawCentredString(A4[0]/2, 1.5*cm, "www.knowhy.co")
+        
+        # Footer Sağ - Sayfa numarası
         page_num = f"Sayfa {doc.page}"
         canvas.drawRightString(A4[0] - 2*cm, 1.5*cm, page_num)
         
@@ -68,7 +71,7 @@ class ReportService:
         """PDF rapor oluştur"""
         
         # Dosya adı
-        file_name = f"rapor_{uuid.uuid4().hex[:8]}.pdf"
+        file_name = f"Knowhy_Rapor_{uuid.uuid4().hex[:8]}.pdf"
         file_path = os.path.join(settings.reports_dir, file_name)
         
         # PDF dokümanı oluştur
@@ -311,12 +314,16 @@ class ReportService:
             story.append(Paragraph("🏥 KLİNİK DEĞERLENDİRME VE YORUM", heading_style))
             story.append(Spacer(1, 0.1*inch))
             
+            # Markdown'ı temizle ve HTML'e dönüştür
+            cleaned_report = self._convert_markdown_to_html(gemini_report)
+            
             # Gemini raporunu paragraflara böl
-            paragraphs = gemini_report.split('\n\n')
+            paragraphs = cleaned_report.split('\n\n')
             for para in paragraphs:
                 if para.strip():
-                    # Başlıkları tespit et
-                    if para.strip().startswith('#') or para.strip().isupper():
+                    # Başlıkları tespit et (# ile başlayan veya tamamen büyük harf)
+                    stripped = para.strip()
+                    if stripped.startswith('#') or (len(stripped) > 3 and stripped.replace(' ', '').replace('.', '').replace(')', '').replace('(', '').isupper()):
                         section_style = ParagraphStyle(
                             'SectionTitle',
                             parent=styles['Heading3'],
@@ -326,9 +333,25 @@ class ReportService:
                             spaceBefore=15,
                             spaceAfter=8
                         )
-                        story.append(Paragraph(para.strip().replace('#', '').strip(), section_style))
+                        # # işaretlerini temizle
+                        clean_title = stripped.lstrip('#').strip()
+                        story.append(Paragraph(clean_title, section_style))
                     else:
-                        story.append(Paragraph(para.strip(), normal_style))
+                        story.append(Paragraph(stripped, normal_style))
+        
+        # ===== REPORT SONU =====
+        story.append(Spacer(1, 1*inch))
+        end_style = ParagraphStyle(
+            'EndStyle',
+            parent=styles['Normal'],
+            fontName=TURKISH_FONT,
+            fontSize=10,
+            textColor=colors.HexColor('#718096'),
+            alignment=TA_CENTER,
+            leading=14
+        )
+        story.append(Paragraph("Powered by KNOWHY", end_style))
+        story.append(Paragraph('www.knowhy.co', end_style))
         
         # PDF'i oluştur
         doc.build(story, onFirstPage=self._create_header_footer, onLaterPages=self._create_header_footer)
@@ -366,6 +389,38 @@ class ReportService:
             return 'Genel olarak tutarlı, bazı sapmalar'
         else:
             return 'Yüksek tutarlılık ve mantıksal bağlantı'
+    
+    def _convert_markdown_to_html(self, text: str) -> str:
+        """Markdown işaretlerini ReportLab HTML'e dönüştür"""
+        import re
+        
+        if not text:
+            return text
+        
+        # **bold** -> <b>bold</b>
+        text = re.sub(r'\*\*([^*]+)\*\*', r'<b>\1</b>', text)
+        
+        # *italic* -> <i>italic</i>
+        text = re.sub(r'\*([^*]+)\*', r'<i>\1</i>', text)
+        
+        # __bold__ -> <b>bold</b>
+        text = re.sub(r'__([^_]+)__', r'<b>\1</b>', text)
+        
+        # _italic_ -> <i>italic</i>
+        text = re.sub(r'_([^_]+)_', r'<i>\1</i>', text)
+        
+        # - veya * ile başlayan liste öğeleri -> • ile değiştir
+        text = re.sub(r'^[\-\*]\s+', '• ', text, flags=re.MULTILINE)
+        
+        # Sayılı liste (1. 2. 3.) -> olduğu gibi bırak
+        
+        # ═══ gibi dekoratif karakterleri kaldır
+        text = re.sub(r'[═─━═]+', '', text)
+        
+        # Birden fazla boş satırı tek boş satıra indir
+        text = re.sub(r'\n{3,}', '\n\n', text)
+        
+        return text
 
 
 report_service = ReportService()
